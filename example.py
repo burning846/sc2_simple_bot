@@ -109,10 +109,6 @@ class CollectMineralShardsFeatureUnits(base_agent.BaseAgent):
       minerals = [[unit.x, unit.y] for unit in obs.observation.feature_units
                   if unit.alliance == _PLAYER_NEUTRAL]
 
-      if self._previous_mineral_xy in minerals:
-        # Don't go for the same mineral shard as other marine.
-        minerals.remove(self._previous_mineral_xy)
-
       if minerals:
         # Find the closest.
         distances = numpy.linalg.norm(
@@ -121,7 +117,6 @@ class CollectMineralShardsFeatureUnits(base_agent.BaseAgent):
 
         # Swap to the other marine.
         self._marine_selected = False
-        self._previous_mineral_xy = closest_mineral_xy
         return FUNCTIONS.Move_screen("now", closest_mineral_xy)
 
     return FUNCTIONS.no_op()

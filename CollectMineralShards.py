@@ -36,21 +36,6 @@ def _xy_locs(mask):
     return list(zip(x, y))
 
 
-def _xy_command_center_point(obs):
-    # commend_center_points = _xy_locs(obs.observation.feature_screen.unit_type == _COMMAND_CENTER)
-    # commend_center_point = numpy.mean(commend_center_points, axis=0).round()
-    # return commend_center_point
-    for unit in obs.observation.feature_units:
-        # print(int(unit.order_length) == 0)
-        if unit.unit_type == units.Terran.CommandCenter:
-            return tuple((unit.x, unit.y))
-
-def _xyr_command_center_point(obs):
-    for unit in obs.observation.feature_units:
-        if unit.unit_type == units.Terran.CommandCenter:
-            return tuple((unit.x, unit.y, unit.radius))
-
-
 def get_random_position(obs, typename):
     for unit in obs.observation.feature_units:
         if unit.unit_type == typename and int(unit.build_progress) == 100:
@@ -74,33 +59,6 @@ def get_num(obs, typename):
     return cnt
 
 
-
-def _get_potential_supply_positions(obs):
-    res = []
-    x, y, r = _xyr_command_center_point(obs)
-    x = x + r - 26
-    res.extend([(x, y + 25), (x, y - 25)])
-    x = x + 9
-    res.extend([(x, y - 16), (x, y + 16), (x, y + 25), (x, y - 25)])
-    x = x + 8
-    res.extend([(x, y - 16), (x, y + 16), (x, y + 25), (x, y - 25)])
-    x = x + 9
-    res.extend([(x, y - 16), (x, y + 16), (x, y + 25), (x, y - 25)])
-    x = x + 8
-    res.extend([(x, y - 16), (x, y + 16), (x, y - 7), (x, y + 7), (x, y + 25), (x, y - 25)])
-    return res
-
-
-def _get_potential_barrack_positions(obs):
-    res = []
-    x, y, r = _xyr_command_center_point(obs)
-    x = x + r + 20
-    res.extend([(x, y - 20), (x, y - 6), (x, y + 8), (x, y + 22)])
-    x = x + 13
-    res.extend([(x, y - 20), (x, y - 6), (x, y + 8)])
-    return res
-
-
 def _get_minerals_positions(obs):
     res = []
     for unit in obs.observation.feature_units:
@@ -109,22 +67,34 @@ def _get_minerals_positions(obs):
     return res
 
 
-def cal_food(obs):
-    food = 0
-    for unit in obs.observation.feature_units:
-        if unit.unit_type == units.Terran.CommandCenter:
-            food += 15
-        elif unit.unit_type == units.Terran.SupplyDepot:
-            food += 8
-    return food
-
-
 def check_selected(obs, pos):
     for units in obs.observation.feature_units:
         if units.is_selected != 0 and units.x == pos[0] and units.y == pos[1]:
             return True
 
     return False
+
+
+def TSP(marine_xy, minerals, used, cnt):
+    # print(cnt)
+    if cnt < 1:
+        return 0, 0
+    total_cost = 9999999999
+    idx = 0
+    for i in range(len(minerals)):
+        if used[i] == 1:
+            continue
+        distance = numpy.linalg.norm(
+            numpy.array(minerals[i]) - numpy.array(marine_xy), axis=0)
+        used[i] = 1
+        cost, _ = TSP(marine_xy, minerals, used, cnt - 1)
+        used[i] = 0
+        if cost + distance < total_cost:
+            total_cost = cost + distance
+            idx = i
+
+    return total_cost, idx
+
 
 
 class CollectMineralShards(base_agent.BaseAgent):
@@ -147,7 +117,14 @@ class CollectMineralShards(base_agent.BaseAgent):
             return FUNCTIONS.no_op()
         marine_unit = next((m for m in marines
                             if m.is_selected == self._marine_selected), marines[0])
+        marine_other = next((m for m in marines
+                            if m.is_selected != self._marine_selected), marines[1])
         marine_xy = [marine_unit.x, marine_unit.y]
+
+        if marine_unit.x < marine_other.x:
+            left = 1
+        else:
+            left = 0
 
         if not marine_unit.is_selected:
             # Nothing selected or the wrong marine is selected.
@@ -156,14 +133,19 @@ class CollectMineralShards(base_agent.BaseAgent):
 
         if FUNCTIONS.Move_screen.id in obs.observation.available_actions:
             # Find and move to the nearest mineral.
-            minerals = [[unit.x, unit.y] for unit in obs.observation.feature_units
-                      if unit.alliance == _PLAYER_NEUTRAL]
+            if left:
+                minerals = [[unit.x, unit.y] for unit in obs.observation.feature_units
+                          if unit.alliance == _PLAYER_NEUTRAL and unit.x <= 42]
+            else:
+                minerals = [[unit.x, unit.y] for unit in obs.observation.feature_units
+                            if unit.alliance == _PLAYER_NEUTRAL and unit.x > 42]
 
-            if self._previous_mineral_xy in minerals:
-                # Don't go for the same mineral shard as other marine.
-                minerals.remove(self._previous_mineral_xy)
 
             if minerals:
+                # Find the best
+                used = [0 for _ in minerals]
+                # cost, idx = TSP(marine_xy, minerals, used, len(minerals))
+
                 # Find the closest.
                 distances = numpy.linalg.norm(
                     numpy.array(minerals) - numpy.array(marine_xy), axis=1)
@@ -171,7 +153,9 @@ class CollectMineralShards(base_agent.BaseAgent):
 
                 # Swap to the other marine.
                 self._marine_selected = False
-                self._previous_mineral_xy = closest_mineral_xy
                 return FUNCTIONS.Move_screen("now", closest_mineral_xy)
+            else:
+                self._marine_selected = False
+                return FUNCTIONS.no_op()
 
         return FUNCTIONS.no_op()

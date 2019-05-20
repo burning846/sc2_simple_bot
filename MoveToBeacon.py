@@ -22,16 +22,16 @@ def _xy_locs(mask):
   return list(zip(x, y))
 
 class MoveToBeacon(base_agent.BaseAgent):
+  """An agent specifically for solving the MoveToBeacon map."""
 
-    def step(self, obs):
-        super(MoveToBeacon, self).step(obs)
-
-        print(type(obs.observation))
-        print(FUNCTIONS)
-
-        time.sleep(0.5)
-
-        if FUNCTIONS.Move_screen.id in obs.observation.available_actions:
-            return FUNCTIONS.no_op()
-        else:
-            return FUNCTIONS.select_army("select")
+  def step(self, obs):
+    super(MoveToBeacon, self).step(obs)
+    if FUNCTIONS.Move_screen.id in obs.observation.available_actions:
+      player_relative = obs.observation.feature_screen.player_relative
+      beacon = _xy_locs(player_relative == _PLAYER_NEUTRAL)
+      if not beacon:
+        return FUNCTIONS.no_op()
+      beacon_center = numpy.mean(beacon, axis=0).round()
+      return FUNCTIONS.Move_screen("now", beacon_center)
+    else:
+      return FUNCTIONS.select_army("select")
