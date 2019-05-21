@@ -14,15 +14,18 @@
 
 - [ ] DefeatRoaches
 
-## Dependency
-- pysc2
+## Environment
+- Ubuntu 18.04
+- pysc2==2.0.2
+- numpy==1.14.3
+- StarCraft 2.4.7.1
 - [mini games](https://github.com/deepmind/pysc2)
 
 ## Test Example
-```python
-python -m pysc2.bin.agent --map <map name> --agent <agent module>
+```shell
+python -m pysc2.bin.agent --map <map_name> --agent <agent_module>
 ```
 For example 
-```python
+```shell
 python -m pysc2.bin.agent --map BuildMarines --agent BuildMarines.BuildMarines
 ```
