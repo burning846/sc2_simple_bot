@@ -52,11 +52,12 @@ def _xyr_command_center_point(obs):
 
 
 def get_random_position(obs, typename):
+    units = []
     for unit in obs.observation.feature_units:
         if unit.unit_type == typename and int(unit.build_progress) == 100:
-            return tuple((unit.x, unit.y))
+            units.append(tuple((unit.x, unit.y)))
 
-    return None
+    return units[numpy.random.randint(0, len(units) - 1)]
 
 
 def get_idle_position(obs, typename):
@@ -97,7 +98,8 @@ def _get_potential_barrack_positions(obs):
     x = x + r + 20
     res.extend([(x, y - 20), (x, y - 6), (x, y + 8), (x, y + 22)])
     x = x + 13
-    res.extend([(x, y - 20), (x, y - 6), (x, y + 8)])
+    # res.extend([(x, y - 20), (x, y - 6), (x, y + 8)])
+    res.extend([(x, y - 20), (x, y - 6)])
     return res
 
 
@@ -214,17 +216,29 @@ class BuildMarines(base_agent.BaseAgent):
         # 有空闲基地，有人口，SCV不够多，有钱造新的SCV
         idle_commandcenter_pos = get_idle_position(obs, units.Terran.CommandCenter)
         # print(idle_commandcenter_pos, self.current_scv_number, len(self.mineral_position), obs.observation.player[_FOOD_USED], self.supply_cnt, obs.observation.player[_MINERAL_COLLECTED])
-        if idle_commandcenter_pos is not None and self.current_scv_number <= 2.5 * len(self.mineral_position) and \
+        if idle_commandcenter_pos is not None and self.current_scv_number <= 3 * len(self.mineral_position) and \
                 obs.observation.player[_FOOD_USED] < self.supply_cnt and obs.observation.player[_MINERAL_COLLECTED] >= 50:
             # 已经选中了基地
             # print('build SCV')
             if FUNCTIONS.Train_SCV_quick.id in obs.observation.available_actions and check_selected(obs, idle_commandcenter_pos):
                 if self.supply_cnt > obs.observation.player[_FOOD_USED] + len(obs.observation.build_queue) and \
-                        self.current_scv_number + len(obs.observation.build_queue) <= 2.5 * len(self.mineral_position):
+                        self.current_scv_number + len(obs.observation.build_queue) <= 3 * len(self.mineral_position):
                     return FUNCTIONS.Train_SCV_quick("now")
 
             else:
                 return FUNCTIONS.select_point("select", idle_commandcenter_pos)
+
+        # 有钱，还有地方，就造兵营
+        if obs.observation.player[_MINERAL_COLLECTED] >= 150 and self.current_barrack_number < len(self.potential_barrack_positions):
+            # print('build Barrack')
+            if FUNCTIONS.Build_Barracks_screen.id in obs.observation.available_actions:
+                # print('build')
+                pos = self.potential_barrack_positions[self.current_barrack_number]
+                return FUNCTIONS.Build_Barracks_screen('now', pos)
+            else:
+                # print('select')
+                scv_pos = get_random_position(obs, units.Terran.SCV)
+                return FUNCTIONS.select_point("select", scv_pos)
 
 
         # 有钱，预支人口不够，还有地方，就造补给站
@@ -241,19 +255,6 @@ class BuildMarines(base_agent.BaseAgent):
                 # print('select')
                 scv_pos = get_random_position(obs, units.Terran.SCV)
                 return FUNCTIONS.select_point("select", scv_pos)
-
-        # 有钱，还有地方，就造兵营
-        if obs.observation.player[_MINERAL_COLLECTED] >= 150 and self.current_barrack_number < len(self.potential_barrack_positions):
-            # print('build Barrack')
-            if FUNCTIONS.Build_Barracks_screen.id in obs.observation.available_actions:
-                # print('build')
-                pos = self.potential_barrack_positions[self.current_barrack_number]
-                return FUNCTIONS.Build_Barracks_screen('now', pos)
-            else:
-                # print('select')
-                scv_pos = get_random_position(obs, units.Terran.SCV)
-                return FUNCTIONS.select_point("select", scv_pos)
-
 
 
 
