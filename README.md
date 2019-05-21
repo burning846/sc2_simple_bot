@@ -1,5 +1,9 @@
 # Simple Bot for StarCraft2
 
+[Burning](https://github.com/burning846)
+
+## Mini Games
+
 - [ ] MoveToBeacon
 
 - [x] BuildMarines
