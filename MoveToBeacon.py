@@ -31,7 +31,7 @@ class MoveToBeacon(base_agent.BaseAgent):
       beacon = _xy_locs(player_relative == _PLAYER_NEUTRAL)
       if not beacon:
         return FUNCTIONS.no_op()
-      beacon_center = numpy.mean(beacon, axis=0).round()
+      beacon_center = np.mean(beacon, axis=0).round()
       return FUNCTIONS.Move_screen("now", beacon_center)
     else:
       return FUNCTIONS.select_army("select")

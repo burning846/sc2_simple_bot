@@ -4,7 +4,7 @@
 
 ## Mini Games
 
-- [ ] MoveToBeacon
+- [x] MoveToBeacon
 
 - [x] BuildMarines
 
@@ -27,7 +27,7 @@
 
 ## Test Example
 ```shell
-python -m pysc2.bin.agent --map <map_name> --agent <agent_module>
+python -m pysc2.bin.agent --map <mapname> --agent <filename.classname>
 ```
 For example 
 ```shell
