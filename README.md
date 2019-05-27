@@ -2,6 +2,8 @@
 
 [Burning](https://github.com/burning846)
 
+![](./img/1.jpeg)
+
 ## Mini Games
 
 - [x] MoveToBeacon
@@ -33,3 +35,4 @@ For example
 ```shell
 python -m pysc2.bin.agent --map BuildMarines --agent BuildMarines.BuildMarines
 ```
+
