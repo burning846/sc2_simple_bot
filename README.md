@@ -16,7 +16,7 @@
 
 - [ ] DefeatZerglingsAndBanelings
 
-- [ ] FindAndDefeatZerglings
+- [x] FindAndDefeatZerglings
 
 - [ ] DefeatRoaches
 
