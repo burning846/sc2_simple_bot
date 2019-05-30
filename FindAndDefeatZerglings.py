@@ -41,7 +41,7 @@ class FindAndDefeatZerglings(base_agent.BaseAgent):
 
     def reset(self):
         super(FindAndDefeatZerglings, self).reset()
-        self.loc = [[14,24],[14,34],[14,45],[26,45],[38,45],[50,45],[50,34],[50,24],[38,24],[38,34],[26,34],[26,24]]
+        self.loc = [[14,25],[14,34],[14,45],[26,45],[38,45],[50,45],[50,34],[50,25],[38,25],[38,34],[26,34],[26,25]]
         self.index = len(self.loc) - 3
 
     def step(self, obs):
